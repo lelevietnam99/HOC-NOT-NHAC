@@ -58,7 +58,7 @@
             font-size: 110px;
             font-family: "Times New Roman", serif;
             left: 30px;
-            top: 45px;
+            top: -3px; /* Đã căn chỉnh lại Khóa Son cho khớp với khuông mới */
             pointer-events: none;
             color: #000;
         }
@@ -95,10 +95,9 @@
             top: 4px;
         }
 
-        /* Khu vực nút bấm - Đã tăng khoảng cách */
         .controls {
             display: flex;
-            gap: 50px; /* Đã tăng khoảng cách từ 25px lên 50px */
+            gap: 50px; 
             margin-bottom: 40px;
             flex-wrap: wrap; 
             justify-content: center;
@@ -166,11 +165,11 @@
     <div id="result-display"></div>
 
     <script>
+        // Mảng 17 nốt nhạc tương ứng với 9 dòng và 8 khe (chuẩn nốt Khóa Son)
+        // Index 0 là nốt Đô (trên 2 dòng kẻ phụ), Index 16 là nốt La (dưới 2 dòng kẻ phụ)
         const noteNames = [
-            'Si', 'La', 'Sol', 'Fa', 'Mi', 'Rê', 'Đô', 
-            'Si', 'La', 'Sol', 'Fa', 'Mi', 'Rê', 'Đô', 
-            'Si', 'La', 'Sol', 'Fa', 'Mi', 'Rê', 'Đô', 
-            'Si', 'La', 'Sol', 'Fa', 'Mi', 'Rê', 'Đô', 'Si'
+            'Đô', 'Si', 'La', 'Sol', 'Fa', 'Mi', 'Rê', 'Đô', 
+            'Si', 'La', 'Sol', 'Fa', 'Mi', 'Rê', 'Đô', 'Si', 'La'
         ];
 
         let currentNoteIndex = -1;
@@ -179,9 +178,10 @@
             const staffContainer = document.getElementById('staff');
             let html = '<div class="clef">&#119070;</div>'; 
             
-            for (let i = 0; i < 29; i++) {
+            for (let i = 0; i < 17; i++) {
                 if (i % 2 === 0) {
-                    const isMainLine = [10, 12, 14, 16, 18].includes(i);
+                    // Vị trí 5 dòng kẻ chính bây giờ dời về các index 4, 6, 8, 10, 12
+                    const isMainLine = [4, 6, 8, 10, 12].includes(i);
                     html += `<div class="row line ${isMainLine ? 'main-line' : ''}" id="pos-${i}"></div>`;
                 } else {
                     html += `<div class="row space" id="pos-${i}"></div>`;
@@ -197,9 +197,11 @@
 
             document.getElementById('result-display').innerText = '';
 
-            currentNoteIndex = Math.floor(Math.random() * 29);
+            // Random từ 0 đến 16
+            currentNoteIndex = Math.floor(Math.random() * 17);
 
-            const stemDirection = currentNoteIndex <= 14 ? 'stem-down' : 'stem-up';
+            // Xác định chiều của đuôi nốt (từ nốt Si ở dòng giữa - index 8 trở lên đuôi hướng xuống)
+            const stemDirection = currentNoteIndex <= 8 ? 'stem-down' : 'stem-up';
             
             const noteHtml = `<div class="note ${stemDirection}"></div>`;
             document.getElementById(`pos-${currentNoteIndex}`).innerHTML = noteHtml;
