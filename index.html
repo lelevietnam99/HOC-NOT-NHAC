@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Luyện Tập Đọc Nốt Nhạc</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-top: 30px;
+            background-color: #f4f6f8;
+            padding: 0 15px;
+        }
+
+        h2 {
+            color: #333;
+            margin-bottom: 20px;
+            text-align: center;
+            font-size: 32px;
+        }
+
+        /* Vùng chứa khuông nhạc */
+        .staff-container {
+            position: relative;
+            width: 100%;
+            max-width: 800px;
+            margin-bottom: 50px;
+            padding: 20px 0;
+            background: white;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            border-radius: 8px;
+        }
+
+        .row {
+            position: relative;
+            width: 100%;
+        }
+
+        .line {
+            height: 2px;
+            background-color: #d1d5db;
+        }
+
+        .line.main-line {
+            background-color: #000000;
+        }
+
+        .space {
+            height: 14px;
+            background-color: transparent;
+        }
+
+        .clef {
+            position: absolute;
+            font-size: 110px;
+            font-family: "Times New Roman", serif;
+            left: 30px;
+            top: 45px;
+            pointer-events: none;
+            color: #000;
+        }
+
+        .note {
+            width: 16px;
+            height: 12px;
+            border: 2px solid #000;
+            border-radius: 50%;
+            background: white;
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        .note.stem-up::after {
+            content: '';
+            position: absolute;
+            width: 2px;
+            height: 35px;
+            background: black;
+            right: -2px;
+            bottom: 4px;
+        }
+
+        .note.stem-down::after {
+            content: '';
+            position: absolute;
+            width: 2px;
+            height: 35px;
+            background: black;
+            left: -2px;
+            top: 4px;
+        }
+
+        /* Khu vực nút bấm - Đã tăng khoảng cách */
+        .controls {
+            display: flex;
+            gap: 50px; /* Đã tăng khoảng cách từ 25px lên 50px */
+            margin-bottom: 40px;
+            flex-wrap: wrap; 
+            justify-content: center;
+            width: 100%;
+            max-width: 800px;
+        }
+
+        button {
+            padding: 30px 20px;
+            font-size: 32px;
+            font-weight: bold;
+            cursor: pointer;
+            border: none;
+            border-radius: 20px;
+            color: white;
+            transition: all 0.1s ease-in-out;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.3);
+            flex: 1; 
+            min-width: 280px; 
+        }
+
+        button:active {
+            transform: scale(0.95);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+        }
+
+        #btn-generate {
+            background-color: #3b82f6;
+        }
+
+        #btn-generate:hover {
+            background-color: #2563eb;
+        }
+
+        #btn-result {
+            background-color: #10b981;
+        }
+
+        #btn-result:hover {
+            background-color: #059669;
+        }
+
+        #result-display {
+            font-size: 45px;
+            font-weight: bold;
+            color: #ef4444;
+            min-height: 60px;
+            text-align: center;
+            margin-bottom: 50px;
+        }
+    </style>
+</head>
+<body>
+
+    <h2>Luyện Tập Đọc Nốt Nhạc (Khóa Son)</h2>
+
+    <div class="staff-container" id="staff">
+        </div>
+
+    <div class="controls">
+        <button id="btn-generate" onclick="generateRandomNote()">Tạo nốt nhạc</button>
+        <button id="btn-result" onclick="showResult()">Xem kết quả</button>
+    </div>
+
+    <div id="result-display"></div>
+
+    <script>
+        const noteNames = [
+            'Si', 'La', 'Sol', 'Fa', 'Mi', 'Rê', 'Đô', 
+            'Si', 'La', 'Sol', 'Fa', 'Mi', 'Rê', 'Đô', 
+            'Si', 'La', 'Sol', 'Fa', 'Mi', 'Rê', 'Đô', 
+            'Si', 'La', 'Sol', 'Fa', 'Mi', 'Rê', 'Đô', 'Si'
+        ];
+
+        let currentNoteIndex = -1;
+
+        function initStaff() {
+            const staffContainer = document.getElementById('staff');
+            let html = '<div class="clef">&#119070;</div>'; 
+            
+            for (let i = 0; i < 29; i++) {
+                if (i % 2 === 0) {
+                    const isMainLine = [10, 12, 14, 16, 18].includes(i);
+                    html += `<div class="row line ${isMainLine ? 'main-line' : ''}" id="pos-${i}"></div>`;
+                } else {
+                    html += `<div class="row space" id="pos-${i}"></div>`;
+                }
+            }
+            staffContainer.innerHTML = html;
+        }
+
+        function generateRandomNote() {
+            if (currentNoteIndex !== -1) {
+                document.getElementById(`pos-${currentNoteIndex}`).innerHTML = '';
+            }
+
+            document.getElementById('result-display').innerText = '';
+
+            currentNoteIndex = Math.floor(Math.random() * 29);
+
+            const stemDirection = currentNoteIndex <= 14 ? 'stem-down' : 'stem-up';
+            
+            const noteHtml = `<div class="note ${stemDirection}"></div>`;
+            document.getElementById(`pos-${currentNoteIndex}`).innerHTML = noteHtml;
+        }
+
+        function showResult() {
+            if (currentNoteIndex !== -1) {
+                const noteName = noteNames[currentNoteIndex];
+                document.getElementById('result-display').innerText = `Đáp án: ${noteName}`;
+            } else {
+                document.getElementById('result-display').innerText = 'Hãy bấm "Tạo nốt nhạc"!';
+            }
+        }
+
+        window.onload = initStaff;
+    </script>
+</body>
+</html>
