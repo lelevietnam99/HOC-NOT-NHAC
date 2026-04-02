@@ -22,6 +22,36 @@
             font-size: 32px;
         }
 
+        /* Tùy chỉnh ẩn/hiện dòng kẻ */
+        .settings-controls {
+            display: flex;
+            gap: 30px;
+            margin-bottom: 20px;
+            font-size: 20px;
+            color: #333;
+            background: #e2e8f0;
+            padding: 15px 30px;
+            border-radius: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
+            width: 100%;
+            max-width: 800px;
+        }
+
+        .settings-controls label {
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: bold;
+        }
+
+        .settings-controls input[type="checkbox"] {
+            width: 22px;
+            height: 22px;
+            cursor: pointer;
+        }
+
         /* Vùng chứa khuông nhạc */
         .staff-container {
             position: relative;
@@ -194,8 +224,13 @@
 
     <h2>Luyện Tập Đọc Nốt Nhạc (Khóa Son)</h2>
 
+    <div class="settings-controls">
+        <label><input type="checkbox" id="check-upper" checked onchange="toggleLines()"> Hiện dòng kẻ phụ trên</label>
+        <label><input type="checkbox" id="check-lower" checked onchange="toggleLines()"> Hiện dòng kẻ phụ dưới</label>
+    </div>
+
     <div class="staff-container" id="staff">
-        </div>
+    </div>
 
     <div class="controls">
         <button id="btn-generate" onclick="generateRandomNote()">Tạo nốt nhạc</button>
@@ -218,7 +253,7 @@
         ];
 
         let currentNoteIndex = -1;
-        let autoPlayInterval = null; // Biến lưu trữ vòng lặp tự động
+        let autoPlayInterval = null; 
 
         function initStaff() {
             const staffContainer = document.getElementById('staff');
@@ -233,6 +268,29 @@
                 }
             }
             staffContainer.innerHTML = html;
+            toggleLines(); // Khởi tạo trạng thái ẩn/hiện ban đầu
+        }
+
+        function toggleLines() {
+            const showUpper = document.getElementById('check-upper').checked;
+            const showLower = document.getElementById('check-lower').checked;
+
+            // Ẩn/hiện dòng kẻ phụ trên bằng cách đổi màu nền thành trong suốt
+            document.getElementById('pos-0').style.backgroundColor = showUpper ? '#d1d5db' : 'transparent';
+            document.getElementById('pos-2').style.backgroundColor = showUpper ? '#d1d5db' : 'transparent';
+
+            // Ẩn/hiện dòng kẻ phụ dưới
+            document.getElementById('pos-14').style.backgroundColor = showLower ? '#d1d5db' : 'transparent';
+            document.getElementById('pos-16').style.backgroundColor = showLower ? '#d1d5db' : 'transparent';
+
+            // Nếu nốt hiện tại đang nằm ở vùng vừa bị ẩn đi thì xóa nốt đó
+            if (currentNoteIndex !== -1) {
+                if ((!showUpper && currentNoteIndex <= 3) || (!showLower && currentNoteIndex >= 13)) {
+                    document.getElementById(`pos-${currentNoteIndex}`).innerHTML = '';
+                    document.getElementById('result-display').innerText = '';
+                    currentNoteIndex = -1;
+                }
+            }
         }
 
         function generateRandomNote() {
@@ -242,7 +300,23 @@
 
             document.getElementById('result-display').innerText = '';
 
-            currentNoteIndex = Math.floor(Math.random() * 17);
+            const showUpper = document.getElementById('check-upper').checked;
+            const showLower = document.getElementById('check-lower').checked;
+
+            // Mặc định luôn có 5 dòng kẻ chính (tương ứng với các nốt từ Fa đến Mi)
+            let validIndices = [4, 5, 6, 7, 8, 9, 10, 11, 12]; 
+
+            // Thêm các vị trí nốt ở dòng kẻ phụ nếu được phép
+            if (showUpper) {
+                validIndices.push(0, 1, 2, 3);
+            }
+            if (showLower) {
+                validIndices.push(13, 14, 15, 16);
+            }
+
+            // Chọn ngẫu nhiên 1 vị trí trong mảng các vị trí hợp lệ
+            const randomIndex = Math.floor(Math.random() * validIndices.length);
+            currentNoteIndex = validIndices[randomIndex];
 
             const stemDirection = currentNoteIndex <= 8 ? 'stem-down' : 'stem-up';
             
@@ -259,41 +333,34 @@
             }
         }
 
-        // --- Hàm xử lý tính năng tự động mới ---
         function toggleAutoPlay() {
             const btnAuto = document.getElementById('btn-auto');
             const inputElement = document.getElementById('interval-input');
 
-            // Nếu đang chạy tự động thì dừng lại
             if (autoPlayInterval !== null) {
                 clearInterval(autoPlayInterval);
                 autoPlayInterval = null;
                 btnAuto.innerText = "Tự động chuyển";
                 btnAuto.classList.remove('active');
-                inputElement.disabled = false; // Cho phép sửa số giây
+                inputElement.disabled = false; 
             } 
-            // Nếu chưa chạy thì bắt đầu
             else {
                 const k = parseFloat(inputElement.value);
                 
-                // Kiểm tra xem dữ liệu nhập vào có hợp lệ không
                 if (isNaN(k) || k <= 0) {
                     alert("Vui lòng nhập số giây hợp lệ (lớn hơn 0)!");
                     return;
                 }
 
-                // Chạy ngay lập tức 1 lần trước khi vào vòng lặp
                 generateRandomNote();
 
-                // Thiết lập vòng lặp chạy sau mỗi k giây (chuyển đổi giây sang mili giây)
                 autoPlayInterval = setInterval(() => {
                     generateRandomNote();
                 }, k * 1000);
 
-                // Cập nhật giao diện nút
                 btnAuto.innerText = "Dừng tự động";
                 btnAuto.classList.add('active');
-                inputElement.disabled = true; // Khóa ô nhập liệu khi đang chạy
+                inputElement.disabled = true; 
             }
         }
 
