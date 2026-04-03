@@ -76,6 +76,7 @@
 
         .line.main-line {
             background-color: #000000;
+            transition: background-color 0.2s;
         }
 
         .space {
@@ -91,6 +92,7 @@
             top: -3px; 
             pointer-events: none;
             color: #000;
+            transition: opacity 0.2s;
         }
 
         .note {
@@ -226,6 +228,7 @@
 
     <div class="settings-controls">
         <label><input type="checkbox" id="check-upper" checked onchange="toggleLines()"> Hiện dòng kẻ phụ trên</label>
+        <label><input type="checkbox" id="check-main" checked onchange="toggleLines()"> Hiện 5 dòng kẻ chính</label>
         <label><input type="checkbox" id="check-lower" checked onchange="toggleLines()"> Hiện dòng kẻ phụ dưới</label>
     </div>
 
@@ -273,11 +276,24 @@
 
         function toggleLines() {
             const showUpper = document.getElementById('check-upper').checked;
+            const showMain = document.getElementById('check-main').checked;
             const showLower = document.getElementById('check-lower').checked;
 
             // Ẩn/hiện dòng kẻ phụ trên bằng cách đổi màu nền thành trong suốt
             document.getElementById('pos-0').style.backgroundColor = showUpper ? '#d1d5db' : 'transparent';
             document.getElementById('pos-2').style.backgroundColor = showUpper ? '#d1d5db' : 'transparent';
+
+            // Ẩn/hiện 5 dòng kẻ chính
+            const mainLineColor = showMain ? '#000000' : 'transparent';
+            [4, 6, 8, 10, 12].forEach(index => {
+                document.getElementById(`pos-${index}`).style.backgroundColor = mainLineColor;
+            });
+
+            // Ẩn/hiện biểu tượng khóa Son cho đồng bộ với 5 dòng kẻ chính
+            const clefEl = document.querySelector('.clef');
+            if(clefEl) {
+                clefEl.style.opacity = showMain ? '1' : '0';
+            }
 
             // Ẩn/hiện dòng kẻ phụ dưới
             document.getElementById('pos-14').style.backgroundColor = showLower ? '#d1d5db' : 'transparent';
@@ -285,7 +301,12 @@
 
             // Nếu nốt hiện tại đang nằm ở vùng vừa bị ẩn đi thì xóa nốt đó
             if (currentNoteIndex !== -1) {
-                if ((!showUpper && currentNoteIndex <= 3) || (!showLower && currentNoteIndex >= 13)) {
+                let shouldClear = false;
+                if (!showUpper && currentNoteIndex <= 3) shouldClear = true;
+                if (!showMain && currentNoteIndex >= 4 && currentNoteIndex <= 12) shouldClear = true;
+                if (!showLower && currentNoteIndex >= 13) shouldClear = true;
+
+                if (shouldClear) {
                     document.getElementById(`pos-${currentNoteIndex}`).innerHTML = '';
                     document.getElementById('result-display').innerText = '';
                     currentNoteIndex = -1;
@@ -294,25 +315,36 @@
         }
 
         function generateRandomNote() {
-            if (currentNoteIndex !== -1) {
-                document.getElementById(`pos-${currentNoteIndex}`).innerHTML = '';
-            }
-
-            document.getElementById('result-display').innerText = '';
-
             const showUpper = document.getElementById('check-upper').checked;
+            const showMain = document.getElementById('check-main').checked;
             const showLower = document.getElementById('check-lower').checked;
 
-            // Mặc định luôn có 5 dòng kẻ chính (tương ứng với các nốt từ Fa đến Mi)
-            let validIndices = [4, 5, 6, 7, 8, 9, 10, 11, 12]; 
+            let validIndices = []; 
 
-            // Thêm các vị trí nốt ở dòng kẻ phụ nếu được phép
+            // Thêm các vùng hợp lệ dựa vào checkbox
             if (showUpper) {
                 validIndices.push(0, 1, 2, 3);
+            }
+            if (showMain) {
+                validIndices.push(4, 5, 6, 7, 8, 9, 10, 11, 12);
             }
             if (showLower) {
                 validIndices.push(13, 14, 15, 16);
             }
+
+            // Cảnh báo nếu không chọn vùng nào
+            if (validIndices.length === 0) {
+                alert("Vui lòng tích chọn ít nhất một khu vực (Phụ trên, Khuông chính, hoặc Phụ dưới) để tạo nốt nhạc!");
+                // Nếu đang auto play thì dừng lại
+                if (autoPlayInterval !== null) toggleAutoPlay();
+                return;
+            }
+
+            // Xóa nốt cũ nếu có
+            if (currentNoteIndex !== -1) {
+                document.getElementById(`pos-${currentNoteIndex}`).innerHTML = '';
+            }
+            document.getElementById('result-display').innerText = '';
 
             // Chọn ngẫu nhiên 1 vị trí trong mảng các vị trí hợp lệ
             const randomIndex = Math.floor(Math.random() * validIndices.length);
@@ -352,7 +384,9 @@
                     return;
                 }
 
+                // Chạy hàm tạo nốt lần đầu ngay lập tức, nếu fail (do không chọn dòng kẻ) thì ngắt
                 generateRandomNote();
+                if(currentNoteIndex === -1) return;
 
                 autoPlayInterval = setInterval(() => {
                     generateRandomNote();
